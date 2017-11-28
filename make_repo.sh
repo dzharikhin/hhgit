@@ -32,12 +32,18 @@ git -C repo commit -m "feature2 [feature2.png init.png refactoring.png] => logo.
 git -C repo checkout feature1
 python -c "import hhgit; hhgit.to_text(['img/init.png'], 'repo/logo.data')"
 python -c "import hhgit; hhgit.to_text(['img/refactoring.png'], 'repo/bg.data')"
-git -C repo add *.data
+git -C repo add logo.data
+git -C repo add bg.data
 git -C repo commit -m "refactoring [init.png] => logo.data [refactoring.png] => bg.data"
 
 git -C repo checkout rc
 git -C repo merge --commit -m "refactoring to rc" feature1
 git -C repo merge --commit -m "feature2 to rc" feature2
+sed -i '/=.*/d' ./repo/logo.data 
+sed -i '/<.*/d' ./repo/logo.data 
+sed -i '/>.*/d' ./repo/logo.data 
+sed -i '/.*214;0;28/d' ./repo/logo.data 
+git -C repo commit -m "resolving confilct feature2 to rc"
 #Clean empty commits
 git -C repo filter-branch --commit-filter 'git_commit_non_empty_tree "$@"' -- --all
 #Add message to all data files in all commits
