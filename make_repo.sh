@@ -32,7 +32,8 @@ git -C repo commit -m "feature2 [refactoring.png init feature2.png] => logo.data
 git -C repo checkout feature1
 python -c "import hhgit; hhgit.to_text(['img/init.png'], 'repo/logo.data')"
 python -c "import hhgit; hhgit.to_text(['img/refactoring.png'], 'repo/bg.data')"
-git -C repo add *.data
+git -C repo add logo.data
+git -C repo add bg.data
 git -C repo commit -m "refactoring [init.png] => logo.data [refactoring.png] => bg.data"
 
 git -C repo checkout rc
