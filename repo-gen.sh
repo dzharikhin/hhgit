@@ -2,6 +2,10 @@
 #
 # Typical git-flow repository generator
 
+# New repository name
+REPO_NAME="$1"
+[ -z "${REPO_NAME}" ] && REPO_NAME="train_repo"
+
 # Directory where script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Directory of input images
@@ -57,7 +61,8 @@ gen_data() {
 }
 
 # Do main logic
-git init
+git init "${REPO_NAME}"
+cd "${REPO_NAME}"
 gen_data main.data init.png
 git add main.data
 git commit -m "init ${COMMIT_MESSAGE}"
