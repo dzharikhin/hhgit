@@ -1,49 +1,102 @@
 #!/bin/bash
-REPO_PATH="repo_`date +%s`"
+set -e
+shopt -s extglob
 
-mkdir $REPO_PATH
-cd $REPO_PATH
-git init
-cd ..
-python -c "from hhgit import *; to_text(['img/init.png'], '$REPO_PATH/main.data')"
-cd $REPO_PATH
-git add main.data
-git commit -m "{Create repository} ['img/init.png']->{main.data}"
-git checkout -b init master
-git branch -d master
-git checkout -b rc
+DIR_PATH=`pwd`
+REPO_NAME="my_repo"
+REPO_PATH="${DIR_PATH}/${REPO_NAME}"
 
-git checkout -b bugfix
-cd ..
-python -c "from hhgit import *; to_text(['img/init.png', 'img/bugfix.png'], '$REPO_PATH/main.data')"
-cd $REPO_PATH
-git commit -am "{Make hotfix} ['img/init.png', 'img/bugfix.png']->{'$REPO_PATH/main.data'}"
-git checkout rc
-git merge bugfix
+function create_img() {
+    cd ${DIR_PATH}
+    num_args=$#
+    out_file=${@:num_args:1}
+    in_files=""
+    for file in ${@:2:((num_args-2))}
+    do
+        in_files="${in_files} '${file}'"
+    done
+    # trim whitspaces
+    in_files="${in_files##*( )}"
+    # split by comma
+    in_files="${in_files// /, }"
 
-git checkout -b feature1
-cd ..
-python -c "from hhgit import *; to_text(['img/refactoring.png', 'img/init.png', 'img/bugfix.png'], '$REPO_PATH/main.data')"
-cd $REPO_PATH
-git commit -am "{Make feature1} ['img/refactoring.png', 'img/init.png', 'img/bugfix.png']->{'$REPO_PATH/main.data'}"
+    case "$1" in
+        text)
+            python -c "from hhgit import *; to_text([${in_files}], '${REPO_PATH}/${out_file}')"
+        ;;
+        png)
+            python -c "from hhgit import *; from_text([${in_files}], '${REPO_PATH}/${out_file}')"
+        ;;
+    esac
+    cd ${REPO_PATH}
+}
+    
+function main_git() {
+    mkdir -p ${REPO_PATH}
+    git init ${REPO_PATH}
+    create_img text img/init.png main.data
 
-git checkout -b feature1-refactoring
-cd ..
-python -c "from hhgit import *; to_text(['img/refactoring.png'], '$REPO_PATH/background.data')"
-python -c "from hhgit import *; to_text(['img/init.png', 'img/bugfix.png'], '$REPO_PATH/main.data')"
-cd $REPO_PATH
-git add background.data
-git commit -am "{Make refactoring} ['img/refactoring.png']->{'$REPO_PATH/backgroung.data'}, ['img/init.png', 'img/bugfix.png']->{'$REPO_PATH/main.data'}"
-git checkout rc
-git merge feature1-refactoring
-git checkout feature1
+    git add .
+    git commit -m "{Init repository} [${in_files}]->{${out_file}}"
+    git branch -m init
 
-git checkout -b feature2
-cd ..
-python -c "from hhgit import *; to_text(['img/refactoring.png', 'img/init.png', 'img/bugfix.png', 'img/feature2.png'], '$REPO_PATH/main.data')"
-cd $REPO_PATH
-git commit -am "{Make feature2} ['img/refactoring.png', 'img/init.png', 'img/bugfix.png', 'img/feature2.png']->{'$REPO_PATH/main.data'}"
-git checkout rc
-git merge -m "{Merge all feature to RC}" feature2
+    git checkout -b rc
+    git checkout -b bugfix
+    create_img text img/init.png img/bugfix.png main.data
+    git commit -am "{Make hotfix} [${in_files}]->{${out_file}}"
+    git checkout rc
+    git merge --no-ff bugfix -m "Merge hotfix to RC"
 
-git filter-branch -f --tree-filter "find * -name '*.data' -type f -exec sed -i '1i #OhShhhICanRewriteHistory' {} \;" HEAD --all
+    git checkout init
+    git checkout -b feature1
+    create_img text img/refactoring.png img/init.png main.data
+    git commit -am "{Make feature1} [${in_files}]->{${out_file}}"
+
+    git checkout -b feature1-refactoring
+    create_img text img/refactoring.png background.data
+    t_in_files=${in_files}
+    t_out_file=${out_file}
+    create_img text img/init.png main.data
+    git add .
+    git commit -am "{Make refactoring} [${t_in_files}]->{${t_out_file}}, [${in_files}]->{${out_file}}"
+
+    git checkout rc
+    create_img text img/refactoring.png img/init.png main.data
+    git add .
+    git commit -am "{Make no conflict} [${in_files}]->{${out_file}}"
+    git merge --no-ff feature1-refactoring -m "Merge refactoring to RC"
+    git checkout feature1
+
+    git checkout -b feature2
+    create_img text img/refactoring.png img/init.png img/feature2.png main.data
+    git commit -am "{Make feature2} [${in_files}]->{${out_file}}"
+    git checkout rc
+    git merge --no-ff -m "{Merge feature2 to RC}" feature2
+
+    git filter-branch -f --tree-filter "find * -name '*.data' -type f -exec sed -i '1i #OhShhhICanRewriteHistory' {} \;" HEAD --all
+}
+
+################################################################
+#   Usage:                                                     #
+# Create png file from text file(s)                            #
+# ./mega_git_workflow.sh to_text [input_files] output_file     #
+#                                                              #
+# Create text file from png file(s)                            #
+# ./mega_git_workflow.sh from_text [input_files] output_file   #
+#                                                              #
+# Main script                                                  #
+# ./mega_git_workflow.sh                                       #
+################################################################
+
+case "$1" in
+    to_text)
+        create_img text "${@:2:$#}"
+        ;;
+    from_text)
+        create_img png "${@:2:$#}"
+        ;;
+    *)
+        main_git
+esac
+
+shopt -u extglob
