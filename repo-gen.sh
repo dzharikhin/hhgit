@@ -133,7 +133,7 @@ git filter-branch --tree-filter '
 ' -- --all
 
 # Print repository tree
-git log --graph --decorate --oneline
+git --no-pager log --graph --decorate --oneline
 
 # Prepare basic data files
 to_text "${TMP_DIR}/init.data" init.png
