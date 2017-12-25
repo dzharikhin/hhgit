@@ -1,0 +1,39 @@
+#!/bin/bash
+
+git init Suchkov
+
+git -C Suchkov checkout -b rc
+python3 -c "import hhgit; hhgit.to_text(['img/init.png'],'Suchkov/main.txt')"
+git -C Suchkov add main.txt
+git -C Suchkov commit -m"init [init.png] -> main.txt"
+
+git -C Suchkov checkout -b bugfix
+python3 -c "import hhgit; hhgit.to_text(['img/bugfix.png','img/init.png'],'Suchkov/main.txt')"
+git -C Suchkov add main.txt
+git -C Suchkov commit -m"bugfix [init.png bugfix.png] -> main.txt"
+
+git -C Suchkov checkout rc
+git -C Suchkov checkout -b feature1
+python3 -c "import hhgit; hhgit.to_text(['img/refactoring.png','img/init.png'],'Suchkov/main.txt')"
+git -C Suchkov add main.txt
+git -C Suchkov commit -m"feature1 [refactoring.png init.png] -> main.txt"
+
+git -C Suchkov checkout -b feature2
+python3 -c "import hhgit; hhgit.to_text(['img/refactoring.png','img/init.png','img/feature2.png'],'Suchkov/main.txt')"
+git -C Suchkov add main.txt
+git -C Suchkov commit -m"feature2 [refactoring.png init.png feature2.png] -> main.txt"
+
+git -C Suchkov checkout feature1
+git -C Suchkov checkout -b feature1-refactoring
+python3 -c "import hhgit; hhgit.to_text(['img/init.png'],'Suchkov/main.txt')"
+python3 -c "import hhgit; hhgit.to_text(['img/refactoring.png'],'Suchkov/refactoring.txt')"
+git -C Suchkov add main.txt
+git -C Suchkov add refactoring.txt
+git -C Suchkov commit -m"feature2 [init.png feature1.png] -> main.txt"
+
+git -C Suchkov checkout rc
+git -C Suchkov merge bugfix --no-edit
+git -C Suchkov merge feature1-refactoring --no-edit
+git -C Suchkov merge feature2 --no-edit
+
+
